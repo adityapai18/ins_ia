@@ -1,0 +1,8 @@
+CREATE TABLE  user_data (
+  UID int(10) unsigned NOT NULL,
+  NAME varchar(45) NOT NULL DEFAULT '',
+  EMAIL varchar(45) NOT NULL DEFAULT '',
+  IMG_URL varchar(100) NOT NULL DEFAULT '',
+  FILES varchar(5000) NOT NULL DEFAULT '',
+  PRIMARY KEY (UID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
