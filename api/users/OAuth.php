@@ -2,7 +2,6 @@
 require_once("./dbConfig.php");
 require_once './dbFunctions.php';
 require_once './auth_helper.php';
-require_once './secure_keys.php';
 header('Access-Control-Allow-Origin: *');
 //MySQL database Connection
 
@@ -20,9 +19,9 @@ $json = file_get_contents('php://input');
 $obj = json_decode($json, true);
 $result = [];
 if (isset($obj["email"]) && isset($obj["password"])) {
-  // $key = getDecryptedAuthKeyFromEmail($dbh,$obj["email"]);
+  $key = getDecryptedAuthKeyFromEmail($dbh, $obj["email"]);
   $email = $obj["email"];
-  $pwd = decrypt_message($obj['password'], $enc_key);
+  $pwd = decrypt_message_oauth($obj['password'], hex2bin($key));
   //Declare array variable
   //Select Query
   $sql = "SELECT * FROM users WHERE EMAIL=:email and UPASS=:pwd ;";
@@ -35,25 +34,21 @@ if (isset($obj["email"]) && isset($obj["password"])) {
   if (isset($res) && isset($res[0]) && count($res) == 1) {
     $user_data = getUserData($dbh, $res[0]["UID"]);
     if ($user_data !== false) {
-      $isExists = checkKeyAlreadyExists($res[0]["USED_KEY"], $obj["password"],$dbh,$res[0]["UID"]);
-      if ($isExists) {
-        $result['loginStatus'] = false;
-        $result['message'] = "creadentials unaccepted";
-      } else {
-        $resKey = generateAndUpdateKeyForUser($dbh, $user_data['UID']);
-        $result['loginStatus'] = true;
-        $result['message'] = "success";
-        $result["user_data"] = $user_data;
-        $result["token"] = $resKey;
-      }
+
+      $resKey = generateAndUpdateKeyForUser($dbh, $user_data['UID']);
+      $result['loginStatus'] = true;
+      $result['message'] = "success";
+      $result["user_data"] = $user_data;
+      $result["token"] = $resKey;
     } else {
-      $result["user_data"] = null;
+      $result["user_data"] = "nigga gay";
     }
   } else {
 
     $result['loginStatus'] = false;
     $result['message'] = "invalid";
   }
+  // $result['key'] = $key;
   // Converting the array into JSON format.
   $json_data = json_encode($result);
 

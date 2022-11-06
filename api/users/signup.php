@@ -1,7 +1,7 @@
 <?php
-require_once('./auth_helper.php');
-require_once("./dbConfig.php");
-include './dbFunctions.php';
+require_once './auth_helper.php';
+require_once "./dbConfig.php" ;
+require_once './dbFunctions.php';
 header('Access-Control-Allow-Origin: *');
 
 try {
