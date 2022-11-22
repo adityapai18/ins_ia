@@ -20,6 +20,30 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <?php session_start(); ?>
+<?php
+function getDayBookingsByEmail(string $email, string $datePicked)
+{
+	include '../../../api/users/auth/dbConfig.php';
+	try {
+		$dbh = new PDO("mysql:host=$hostname;dbname=$database", $username, $password);
+		$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	} catch (\PDOException $err) {
+		die("Couldn't connect to DB " . $err->getMessage());
+	}
+	$sql = "SELECT BOOKING FROM doc_data WHERE EMAIL=:id;";
+	$stmt =  $dbh->prepare($sql);
+	$stmt->bindParam(':id', $email);
+	$stmt->execute();
+	$stmt->setFetchMode(PDO::FETCH_ASSOC);
+	$res = $stmt->fetch();
+	$bookings = json_decode($res['BOOKING'], true);
+	if (isset($bookings[$datePicked])) {
+		return $bookings[$datePicked];
+	}
+	return false;
+}
+
+?>
 
 <body>
 	<div class="wrapper">
@@ -295,6 +319,9 @@
 								<div class="card-body py-3">
 									<div class="chart chart-sm">
 										<canvas id="chartjs-dashboard-line"></canvas>
+										<form action="./index.php" method="post" id="dateForm">
+											<input type="hidden" name="datePicked" id="dateInput">
+										</form>
 									</div>
 								</div>
 							</div>
@@ -306,34 +333,52 @@
 							<div class="card flex-fill w-100">
 								<div class="card-header">
 
-									<h5 class="card-title mb-0">Browser Usage</h5>
+									<h5 class="card-title mb-0">Slot Details</h5>
 								</div>
-								<div class="card-body d-flex">
-									<div class="align-self-center w-100">
-										<div class="py-3">
-											<div class="chart chart-xs">
-												<canvas id="chartjs-dashboard-pie"></canvas>
-											</div>
+								<?php
+								$date = $_POST['datePicked'];
+								$doc_email = $_SESSION['user_data']['EMAIL'];
+								if (isset($date) && isset($doc_email))
+									$result = getDayBookingsByEmail($doc_email, $date);
+								if ($result === false) {
+								?>
+								<?php
+								} else {
+								?>
+									<div class="card-body d-flex">
+										<div class="align-self-center w-100">
+											<table class="table mb-0">
+												<thead>
+													<tr>
+														<th>Slot</th>
+														<th class="text-end">Status</th>
+													</tr>
+												</thead>
+												<tbody>
+													<?php
+													foreach ($result as $key => $value) {
+													?>
+														<tr>
+															<td><?php echo $key . ':00 - ' . intval($key) + 1 . ":00" ?></td>
+															<td class="text-end">
+																<?php
+																if ($value === false) {
+																	echo "<span class='badge bg-warning'>vacant</span>";
+																} else {
+																	echo "<span class='badge bg-success'>booked</span>";
+																}
+																?></td>
+														</tr>
+													<?php
+													}
+													?>
+												</tbody>
+											</table>
 										</div>
-
-										<table class="table mb-0">
-											<tbody>
-												<tr>
-													<td>Chrome</td>
-													<td class="text-end">4306</td>
-												</tr>
-												<tr>
-													<td>Firefox</td>
-													<td class="text-end">3801</td>
-												</tr>
-												<tr>
-													<td>IE</td>
-													<td class="text-end">1689</td>
-												</tr>
-											</tbody>
-										</table>
 									</div>
-								</div>
+								<?php
+								}
+								?>
 							</div>
 						</div>
 						<div class="col-12 col-md-6 col-xxl-3 d-flex order-1 order-xxl-1">
@@ -587,13 +632,16 @@
 		document.addEventListener("DOMContentLoaded", function() {
 			var date = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
 			var defaultDate = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate();
+			console.log(defaultDate)
 			document.getElementById("datetimepicker-dashboard").flatpickr({
 				inline: true,
 				prevArrow: "<span title=\"Previous month\">&laquo;</span>",
 				nextArrow: "<span title=\"Next month\">&raquo;</span>",
-				defaultDate: defaultDate,
+				defaultDate: <?php if (isset($_POST['datePicked'])) echo json_encode($_POST['datePicked']);
+								else echo json_encode('2022-11-24') ?>,
 				onChange: function(selectedDates, dateStr, instance) {
-					console.log(dateStr)
+					document.getElementById('dateInput').value = dateStr;
+					document.getElementById('dateForm').submit();
 				}
 			});
 		});
