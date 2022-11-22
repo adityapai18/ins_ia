@@ -20,12 +20,12 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/flowbite@1.5.4/dist/flowbite.min.css" />
+    <script src="https://unpkg.com/flowbite@1.5.4/dist/flowbite.js"></script>
 </head>
 <?php 
 session_start();
 ?> 
 <body class="bg-gray-50 bg-gray-900 ">
-    <script src="https://unpkg.com/flowbite@1.5.4/dist/flowbite.js"></script>
     <section class="bg-gray-50 dark:bg-gray-900">
         <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-0 m-3">
             <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">

@@ -14,10 +14,11 @@ if (isset($_POST['date']) && isset($_POST['startTime']) && isset($_POST['endTime
     $date = $_POST['date'];
     $email = $_POST['email'];
     $schedule[$date] = array();
+    
     for ($i = intval($startTime); $i < $endTime; $i++) {
         $slotArray[$i] = false;
     }
-    $schedule=getBookingArray($dbh , $email);
+    $schedule = getBookingArray($dbh, $email);
     // print_r($schedule);
     $schedule[$date] = $slotArray;
     $scheduleJson = json_encode($schedule);
@@ -26,20 +27,26 @@ if (isset($_POST['date']) && isset($_POST['startTime']) && isset($_POST['endTime
     $stmt->bindParam(':bk', $scheduleJson);
     $stmt->bindParam(':email', $email);
     $status = $stmt->execute();
-    if ($status)
+    if ($status) {
         $result['message'] = 'success';
+        header('Location: ../../doc_end/home/static', true);
+    } else {
+        header('Location: ../../doc_end/error', true);
+    }
 } else {
     $result['message'] = "error";
+    header('Location: ../../doc_end/error', true);
 }
 echo json_encode($result);
 
 
-function getBookingArray(\PDO $dbh, string $email){
+function getBookingArray(\PDO $dbh, string $email)
+{
     $sql = "SELECT BOOKING FROM doc_data WHERE EMAIL=:email;";
     $stmt =  $dbh->prepare($sql);
     $stmt->bindParam(':email', $email);
     $stmt->execute();
     $stmt->setFetchMode(PDO::FETCH_ASSOC);
     $res = $stmt->fetch();
-    return json_decode($res['BOOKING'],true);
+    return json_decode($res['BOOKING'], true);
 }
