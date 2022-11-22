@@ -3,13 +3,14 @@
 import 'dart:convert';
 
 import 'package:doctor_appointment/helpers/authLogic.dart';
+import 'package:doctor_appointment/navigation/auth_stack.dart';
 import 'package:doctor_appointment/navigation/user_stack.dart';
+import 'package:doctor_appointment/screens/login.dart';
 import 'package:doctor_appointment/screens/sign_up.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
-import 'package:provider/provider.dart';
 
 class User {
   String _name = '';
@@ -54,12 +55,43 @@ class AuthContext with ChangeNotifier, DiagnosticableTreeMixin {
   void setUserData(dynamic userData) {
     user.setName = userData["NAME"];
     user.setEmail = userData["EMAIL"];
+    user.setphotoUrl = userData["IMG_URL"];
     notifyListeners();
+  }
+
+  void setUserImage(String img) {
+    user.setphotoUrl = img;
+    notifyListeners();
+  }
+
+  void logOut(BuildContext context) {
+    user = User();
+    AuthLogic.removeCredentials();
+    notifyListeners();
+    Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder: (BuildContext context) {
+      return const AuthStack();
+    }), (r) {
+      return false;
+    });
+  }
+
+  void updateUserName(String fname, String lname, String email) async {
+    Uri url = Uri.http('192.168.1.3', '/wp/api/users/update_name.php');
+    var data = {'name': fname + ' ' + lname, 'email': email};
+    var response = await http.post(url, body: data);
+    print(response);
+    if (response.statusCode == 200) {
+      var msg = json.decode(response.body);
+      if (msg['message'] == 'success') {
+        setUserData(msg['user_data']);
+      }
+    }
   }
 
   Future<void> signUpEmailAndPass(String fname, String lname, String email,
       String pass, String cpass, BuildContext context) async {
-    Uri url = Uri.http('192.168.1.3', '/wp/api/users/signup.php');
+    Uri url = Uri.http('192.168.1.3', '/wp/api/users/auth/signup.php');
     var hashedPass = hashPassword(pass);
     var data = {
       'name': fname + ' ' + lname,
@@ -75,9 +107,10 @@ class AuthContext with ChangeNotifier, DiagnosticableTreeMixin {
         if (store.generatedKey != '') {
           AuthLogic.putUserCredInSecureStorage(
               {'password': hashedPass, 'email': email});
+          setUserData(msg['user_data']);
           Navigator.pushAndRemoveUntil(context,
               MaterialPageRoute(builder: (BuildContext context) {
-            return const UserStack();
+            return const Login();
           }), (r) {
             return false;
           });
@@ -127,7 +160,7 @@ class AuthContext with ChangeNotifier, DiagnosticableTreeMixin {
 
   Future<void> loginWithEmailAndPassword(
       String email, String pass, BuildContext cntx) async {
-    Uri url = Uri.http('192.168.1.3', '/wp/api/users/login.php');
+    Uri url = Uri.http('192.168.1.3', '/wp/api/users/auth/login.php');
     var hashedPass = hashPassword(pass);
     var passWord = await AuthLogic.encryptUsingEncKey(hashedPass);
     var data = {'password': passWord, 'email': email};
@@ -169,9 +202,9 @@ class AuthContext with ChangeNotifier, DiagnosticableTreeMixin {
   }
 
   Future<void> oAuthLogin(BuildContext cntx) async {
-    Uri url = Uri.http('192.168.1.3', '/wp/api/users/oAuth.php');
+    Uri url = Uri.http('192.168.1.3', '/wp/api/users/auth/oAuth.php');
     var userCred = await AuthLogic.getUserCredInSecureStorage();
-    if (userCred['password'] == null) return;
+    if (userCred['password'] == '') return;
     var passWord = await AuthLogic.encryptUsingStoredKey(userCred['password']!);
     var data = {'password': passWord, 'email': userCred['email']};
     print(data);

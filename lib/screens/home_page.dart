@@ -1,4 +1,5 @@
 import 'package:doctor_appointment/screens/item_details_page.dart';
+import 'package:doctor_appointment/screens/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -65,14 +66,24 @@ class _HomePageState extends State<HomePage> {
 
   Widget profileWid() {
     if (context.watch<AuthContext>().user.photoUrl != '') {
-      return const CircleAvatar(
-        backgroundImage: AssetImage(
-          "assets/dr_1.png",
+      return InkWell(
+        onTap: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const Profile()));
+        },
+        child: CircleAvatar(
+          backgroundImage: Image.network(
+                  'http://192.168.1.3/wp/bucket/images/' +
+                      context.watch<AuthContext>().user.photoUrl)
+              .image,
         ),
       );
     }
     return InkWell(
-      onTap: (() => {}),
+      onTap: (() => {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const Profile()))
+          }),
       child: const Icon(
         Icons.account_circle,
         size: 50,

@@ -88,7 +88,7 @@ class AuthLogic {
   static Future<String> encryptUsingStoredKey(String plainText) async {
     var authObj = AuthLogic.foo();
     var key = await readKey();
-    print(key);
+    if (key == '') return '';
     var iv = IV.fromSecureRandom(16);
     final cipher = Encrypter(AES(Key.fromBase16(key), mode: AESMode.cbc));
     var encrypted = cipher.encrypt(plainText, iv: iv);
@@ -130,6 +130,11 @@ class AuthLogic {
     var encrypted = cipher.encrypt(plainText, iv: iv);
     var hash = authObj.genHMACusingEncKey(iv.base16, encrypted.base16);
     return iv.base16 + hash + encrypted.base16;
+  }
+
+  static void removeCredentials() async {
+    const storage = FlutterSecureStorage();
+    await storage.deleteAll();
   }
 
   static Future<String> readKey() async {
